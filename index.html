@@ -54,6 +54,17 @@
   }
   body.fs-lock{overflow:hidden;position:fixed;width:100%;}
 
+  /* Rotate the whole player 90deg to fill the screen landscape-style when the
+     phone itself is still physically held portrait (screen.orientation.lock
+     needs native fullscreen + Android + a landscape-capable page, and simply
+     isn't supported on iOS at all — so instead of depending on that API we
+     just rotate the box with CSS, which works on every phone regardless). */
+  .player-shell.fake-fs.force-rotate{
+    top:0;left:0;width:100vh;height:100vw;
+    transform-origin:top left;
+    transform:rotate(90deg) translateY(-100%);
+  }
+
   /* corner branding — always visible, bigger in fake-fullscreen */
   .watermark{
     position:absolute;top:10px;left:10px;display:flex;align-items:center;gap:6px;
@@ -390,18 +401,34 @@
   const ICON_COLLAPSE = '<svg viewBox="0 0 24 24"><path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/></svg>';
   let fakeFsOn = false;
 
+  function updateRotateState(){
+    if(!fakeFsOn) return;
+    const isPortrait = window.innerHeight > window.innerWidth;
+    shell.classList.toggle('force-rotate', isPortrait);
+  }
+
   function enterFakeFs(){
     fakeFsOn = true;
     shell.classList.add('fake-fs');
     document.body.classList.add('fs-lock');
     fsBtn.innerHTML = ICON_COLLAPSE;
+    updateRotateState();
     const req = shell.requestFullscreen || shell.webkitRequestFullscreen;
-    if(req) req.call(shell).catch(()=>{});
-    if(screen.orientation && screen.orientation.lock) screen.orientation.lock('landscape').catch(()=>{});
+    if(req){
+      const p = req.call(shell);
+      if(p && p.then){
+        p.then(()=>{
+          if(screen.orientation && screen.orientation.lock){
+            screen.orientation.lock('landscape').catch(()=>{});
+          }
+        }).catch(()=>{});
+      }
+    }
   }
   function exitFakeFs(){
     fakeFsOn = false;
     shell.classList.remove('fake-fs');
+    shell.classList.remove('force-rotate');
     document.body.classList.remove('fs-lock');
     fsBtn.innerHTML = ICON_EXPAND;
     if(document.fullscreenElement || document.webkitFullscreenElement){
@@ -410,6 +437,8 @@
     }
     if(screen.orientation && screen.orientation.unlock){ try{ screen.orientation.unlock(); }catch(e){} }
   }
+  window.addEventListener('resize', updateRotateState);
+  window.addEventListener('orientationchange', updateRotateState);
   fsBtn.addEventListener('click', ()=>{ fakeFsOn ? exitFakeFs() : enterFakeFs(); });
   document.addEventListener('keydown', e=>{ if(e.key === 'Escape' && fakeFsOn) exitFakeFs(); });
   document.addEventListener('fullscreenchange', ()=>{
