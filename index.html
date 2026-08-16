@@ -57,7 +57,7 @@
      iframe is scaled down those icons shrink along with everything else and
      stop looking "zoomed in" on small screens. The extra size is exactly
      compensated by the scale so the visible video still fills the box. */
-  @media (max-width:600px){
+  @media (max-width:600px) and (orientation:portrait){
     .player-shell iframe{
       width:150%;height:150%;
       transform:scale(0.6667); /* 1 / 1.5 */
