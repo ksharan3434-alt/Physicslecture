@@ -59,15 +59,22 @@
      compensated by the scale so the visible video still fills the box. */
   @media (orientation:portrait){
     .player-shell iframe{
-      width:200%;height:200%;
-      transform:scale(0.5); /* 1 / 2.0 */
+      width:180%;height:180%;
+      transform:scale(0.5556); /* 1 / 1.8 */
       transform-origin:top left;
     }
   }
 
-  /* Landscape: left at native size (no scaling) — enlarging Drive's
-     controls beyond native always crops the video edges, which isn't
-     wanted, so landscape stays as-is. */
+  /* Landscape: same non-cropping trick as portrait — oversize the iframe
+     then scale it back down. Unlike upscaling, this never crops the video
+     since the scale-down exactly compensates the oversize. */
+  @media (orientation:landscape){
+    .player-shell iframe{
+      width:180%;height:180%;
+      transform:scale(0.5556); /* 1 / 1.8 */
+      transform-origin:top left;
+    }
+  }
 
   /* "Fake" fullscreen — driven by JS adding this class, not the native
      Fullscreen API. Many mobile browsers (iOS Safari in particular) either
